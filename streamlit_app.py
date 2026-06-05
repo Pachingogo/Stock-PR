@@ -71,9 +71,9 @@ class Percentile_Analysis:
             df["ret"] = df["price"].pct_change().fillna(0)
             df.index = pd.to_datetime(df.index)
             return df
-    except Exception as e:
-        st.error(f"Alpaca API error during historical fetch: {e}")
-        raise e
+        except Exception as e:
+            st.error(f"Alpaca API error during historical fetch: {e}")
+            raise e
 
     def snap(self):
         client = StockHistoricalDataClient(self.api_key, self.api_secret)
