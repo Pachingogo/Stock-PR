@@ -138,7 +138,159 @@ class Percentile_Analysis:
             
         return  current_metrics, pre_daily.close
         # return fig, current_metrics, pre_daily.close
+    def analyze_drawdowns(self):
+        """
+        Calculates all drawdowns, their durations (downside and recovery), 
+        and recovery dates, returning a dictionary mapping drawdown identifiers 
+        to a detailed list of metrics.
 
+        Returns:
+        dict: A dictionary where keys are strings identifying the drawdown 
+            and values are a list of metrics [start_date, Peak_Price, trough_date, 
+            Lowest, recovery_date, End_Price, Day_Fall, 
+            Day_Recovery_days, status].
+        """      
+        
+        self.data = self.data.sort_index()
+        print(self.data.head(), self.data.tail())
+
+
+        price_series = self.data["price"]
+        nav = price_series.dropna()
+        hwm = nav.cummax() # High Water Mark
+        drawdowns = nav / hwm - 1 # Drawdown as a percentage (negative value)
+         
+        # Initialize a dictionary for results: {identifier: [metrics]}
+        dd_recovery_map = {}
+        
+        in_drawdown = False
+        Peak_Price_index = None
+        trough_index = None
+        min_drawdown_val = 0
+
+        
+        for i in range(1, len(nav)):
+            
+
+            # --- Detect the start of a drawdown ---
+            if drawdowns.iloc[i] < 0 and not in_drawdown:
+                in_drawdown = True
+                Peak_Price_index = hwm.index[i-1]
+                trough_index = None # Reset trough index for the new period
+                min_drawdown_val = 0
+            
+            if in_drawdown:
+                # --- Track the lowest point (trough) within the current drawdown ---
+                if drawdowns.iloc[i] < min_drawdown_val:
+                    min_drawdown_val = drawdowns.iloc[i]
+                    trough_index = nav.index[i]
+                
+                # --- Detect the end/recovery of the drawdown ---
+                if drawdowns.iloc[i] >= 0 or i == (len(nav) - 1):
+
+                    dd_period_max_percent = abs(min_drawdown_val) * 100
+                    identifier = dd_period_max_percent
+
+                    # Recovery point reached
+                    recovery_index = nav.index[i]
+                    
+                    # Calculate durations
+                    Day_Fall = (trough_index - Peak_Price_index).days
+                    Fall_Rate = dd_period_max_percent/ Day_Fall 
+                    Day_Recovery = (recovery_index - trough_index).days
+                    recovery_rate = dd_period_max_percent/ Day_Recovery if Day_Recovery != 0 else 0
+
+
+                    Day_Total = Day_Fall + Day_Recovery
+
+                    cover_status = "Ongoing" if i == (len(nav) - 1) else "Recoverd"
+                    
+
+                    historical_data_before_trough = self.data.loc[self.data.index < trough_index]
+                    past_matches = historical_data_before_trough[historical_data_before_trough["price"] <= nav.loc[trough_index]]
+                    
+                    if not past_matches.empty:
+                        last_time_at_price_date = past_matches.index[-1]
+                        
+                        days_apart_from_past = (trough_index - last_time_at_price_date).days
+                        last_time_str = last_time_at_price_date.strftime("%Y-%m-%d")
+                    else:
+                        # If the asset has never been this cheap before (e.g., an all-time low)
+                        last_time_str = "All-Time Low"
+                        days_apart_from_past = 0
+
+
+
+
+                    detail = [
+                        Peak_Price_index.strftime('%Y-%m-%d'),          # Start Date
+                        trough_index.strftime('%Y-%m-%d'),              # Trough Date
+                        recovery_index.strftime('%Y-%m-%d'),            # Recovery Date
+                        nav.loc[Peak_Price_index],                      # Start Price
+                        nav.loc[trough_index],                          # Trough Price
+                        nav.loc[recovery_index],                        # Recovery Price
+                        Day_Fall,                                       # Downside Duration (days)                        
+                        Day_Recovery,                                   # Recovery Duration (days)
+                        days_apart_from_past,                           # Days since last time at trough price
+                        Day_Total,                                      # Total Duration (days)
+                        Fall_Rate,
+                        recovery_rate,
+                        cover_status,                                   # Status
+                    ]
+
+                    dd_recovery_map[identifier] = detail
+                    
+                    in_drawdown = False
+                    trough_index = None # Reset for next loop
+
+
+        
+        analysis_result = pd.DataFrame.from_dict(
+            dd_recovery_map, 
+            orient='index', 
+            columns=["Start",
+                "Trough", 
+                "Recovery", 
+                "Peak_Price",
+                "Lowest",
+                "End_Price",
+                "Day_Fall",                
+                "Day_Recovery",
+                "Day_Retro",
+                "Day_Total",
+                "Fall_Rate",
+                "Recovery_Rate", 
+                "Status"])
+
+        
+        
+        
+        
+
+
+        analysis_result.index = analysis_result.index.astype(float)
+        analysis_result = analysis_result.reset_index(names="DD_%").sort_values(by="Start", ascending=False).round(3).reset_index(drop = True)
+        analysis_result['PR'] = ((analysis_result['DD_%'].rank(pct=True) )* 100).map('{:.0f}%'.format)
+       
+        analysis_result = analysis_result[[
+            "DD_%",
+            "PR",
+            "Status",
+            "Start",
+            "Trough",
+            "Recovery",
+            "Peak_Price",
+            "Lowest",
+            "End_Price",
+            "Day_Fall",            
+            "Day_Recovery",
+            "Day_Retro",
+            "Day_Total",
+            "Fall_Rate",
+            "Recovery_Rate",
+            
+        ]]
+        return analysis_result.iloc[0]
 
 # --- STREAMLIT DASHBOARD APPLICATION EXECUTION ---
 st.title("📊 Real-Time Percentile Analysis")
@@ -184,6 +336,7 @@ try:
             st.text(f"Percentile Rank: {item['pr']:.1f}%")
     
     st.markdown("---")
+    
     selected_row = analysis.analyze_drawdowns()  
     items = list(selected_row.items())  # List of tuples: [('Col_1', value), ...]
 
