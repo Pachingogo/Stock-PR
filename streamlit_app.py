@@ -1,4 +1,4 @@
-mport numpy as np
+import numpy as np
 from scipy import stats
 import pandas as pd
 from alpaca.data.historical import StockHistoricalDataClient
