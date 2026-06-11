@@ -336,7 +336,7 @@ try:
             title=f"{ticker_input} Price Action ({ohlc_option} | Local Time UTC-5)",
             xaxis_title="Time / Date (UTC-5)",
             yaxis_title="Price ($)",
-            xaxis_rangeslider_visible=False, 
+            xaxis_rangeslider_visible=True, 
             template="plotly_dark",           
             height=500,
             margin=dict(l=50, r=50, t=50, b=50),
