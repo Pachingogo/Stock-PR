@@ -342,6 +342,14 @@ try:
             margin=dict(l=50, r=50, t=50, b=50),
             
         )
+        # Show every Nth label to avoid crowding (adjust N based on data density)
+        tick_interval = max(1, len(date_labels) // 20)  # Show ~20 labels
+        fig.update_xaxes(
+            ticktext=date_labels[::tick_interval],
+            tickvals=date_labels[::tick_interval]
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("No intraday or historical bar data returned for the selected window.")
     
