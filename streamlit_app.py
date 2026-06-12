@@ -353,7 +353,7 @@ try:
     else:
         st.warning("No intraday or historical bar data returned for the selected window.")
     st.subheader("HOLC")
-    st.dataframe(ohlc_data.head())
+    st.dataframe(ohlc_data.tail())
     
     st.markdown("---")
 except Exception as e:
