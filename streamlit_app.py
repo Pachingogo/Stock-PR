@@ -349,7 +349,7 @@ try:
             tickvals=date_labels[::tick_interval]
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
     else:
         st.warning("No intraday or historical bar data returned for the selected window.")
     
