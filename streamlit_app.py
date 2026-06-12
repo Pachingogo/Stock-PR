@@ -282,7 +282,7 @@ try:
     st.markdown("---")
 
     st.subheader("Drawdown Historical Analysis Table")
-    st.dataframe(df_drawdown, use_container_width=True)
+    st.dataframe(df_drawdown)
     
     st.markdown("---")
 
