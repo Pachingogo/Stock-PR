@@ -155,7 +155,7 @@ class Percentile_Analysis:
                     recovery_rate = dd_period_max_percent/ Day_Recovery if Day_Recovery != 0 else 0
 
                     Day_Total = Day_Fall + Day_Recovery
-                    cover_status = "Ongoing" if i == (len(nav) - 1) else "Recoverd"
+                    cover_status = -round((1-(nav.loc[recovery_index]/ nav.loc[Peak_Price_index]))*100, 2) if i == (len(nav) - 1) else "Recoverd"
                     
                     historical_data_before_trough = self.data.loc[self.data.index < trough_index]
                     past_matches = historical_data_before_trough[historical_data_before_trough["price"] <= nav.loc[trough_index]]
@@ -188,14 +188,14 @@ class Percentile_Analysis:
         analysis_result = pd.DataFrame.from_dict(
             dd_recovery_map, 
             orient='index', 
-            columns=["Start", "Trough", "Recovery", "Peak_Price", "Lowest", "End_Price", "Day_Fall", "Day_Recovery", "Day_Retro", "Day_Total", "Fall_Rate", "Recovery_Rate", "Status"])
+            columns=["Start", "Trough", "Recovery", "Peak_Price", "Lowest", "End_Price", "Day_Fall", "Day_Recovery", "Day_Retro", "Day_Total", "Fall_Rate", "Recovery_Rate", "Curr_to_ATH_%"])
 
         analysis_result.index = analysis_result.index.astype(float)
         analysis_result = analysis_result.reset_index(names="DD_%").sort_values(by="Start", ascending=False).round(3).reset_index(drop = True)
         analysis_result['PR'] = ((analysis_result['DD_%'].rank(pct=True) )* 100).map('{:.0f}%'.format)
        
         analysis_result = analysis_result[[
-            "DD_%", "PR", "Status", "Start", "Trough", "Recovery", "Peak_Price", "Lowest", "End_Price", "Day_Fall", "Day_Recovery", "Day_Retro", "Day_Total", "Fall_Rate", "Recovery_Rate",
+            "DD_%", "PR", "Curr_to_ATH_%", "Start", "Trough", "Recovery", "Peak_Price", "Lowest", "End_Price", "Day_Fall", "Day_Recovery", "Day_Retro", "Day_Total", "Fall_Rate", "Recovery_Rate",
         ]]
         return analysis_result
 
