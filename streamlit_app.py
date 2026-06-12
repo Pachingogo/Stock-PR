@@ -311,7 +311,7 @@ try:
         timeframe=selected_config["tf"], 
         lookback_days=selected_config["days"]
     )
-    print(ohlc_data)
+    
     if not ohlc_data.empty:
         ohlc_data_plot = ohlc_data.reset_index(drop=False)
         ohlc_data_plot.index = range(len(ohlc_data_plot))
@@ -352,7 +352,10 @@ try:
         st.plotly_chart(fig)
     else:
         st.warning("No intraday or historical bar data returned for the selected window.")
+    st.subheader("HOLC")
+    st.dataframe(ohlc_data.head())
     
+    st.markdown("---")
 except Exception as e:
     st.error(f"Error updating dashboard metrics: {e}")
 
