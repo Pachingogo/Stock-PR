@@ -298,7 +298,7 @@ try:
     
     # Enhanced mapping configurations to accommodate hourly and macro day bars
     config_mapping = {
-        "1min - Intraday":   {"tf": TimeFrame.Minute, "days": 0},
+        "1min - Intraday":   {"tf": TimeFrame.Minute, "days": 0},        
         "1min - 5Day":   {"tf": TimeFrame.Minute, "days": 5},
         "15min - 10Day": {"tf": TimeFrame(15, TimeFrame.Minute.unit), "days": 10},
         "1hr - 60Day":   {"tf": TimeFrame.Hour, "days": 60},
